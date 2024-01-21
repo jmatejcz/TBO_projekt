@@ -92,3 +92,8 @@ jobs:
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+      - name: Run Bandit (Python Static Analysis)
+        run: |
+          pip install bandit
+          bandit -r . # Recursively scan all Python files
