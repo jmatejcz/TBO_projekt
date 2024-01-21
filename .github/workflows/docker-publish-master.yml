@@ -97,3 +97,8 @@ jobs:
         run: |
           pip install bandit
           bandit -r . # Recursively scan all Python files
+      
+      - name: Run Pytest
+        run: |
+          pip install pytest
+          pytest project/tests/
