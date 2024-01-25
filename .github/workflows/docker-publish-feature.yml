@@ -103,8 +103,12 @@ jobs:
 
       - name: Create report files
         run: |
-          /home/runner/work/TBO_projekt/TBO_projekt/ touch report_json.json report_md.md report_html.html
-          /home/runner/work/TBO_projekt/TBO_projekt/ chmod a+w report_json.json report_md.md report_html.html
+          touch /home/runner/work/TBO_projekt/TBO_projekt/report_json.json 
+          touch /home/runner/work/TBO_projekt/TBO_projekt/report_md.md 
+          touch /home/runner/work/TBO_projekt/TBO_projekt/report_html.html
+          chmod a+w /home/runner/work/TBO_projekt/TBO_projekt/report_json.json 
+          chmod a+w /home/runner/work/TBO_projekt/TBO_projekt/report_md.md 
+          chmod a+w /home/runner/work/TBO_projekt/TBO_projekt/report_html.html
 
       - name: ZAP Full Scan
         uses: zaproxy/action-full-scan@v0.9.0
