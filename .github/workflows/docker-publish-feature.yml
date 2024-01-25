@@ -101,20 +101,11 @@ jobs:
         run: |
           nohup python app.py &
 
-      - name: Create report files
-        run: |
-          touch /home/runner/work/TBO_projekt/TBO_projekt/report_json.json 
-          touch /home/runner/work/TBO_projekt/TBO_projekt/report_md.md 
-          touch /home/runner/work/TBO_projekt/TBO_projekt/report_html.html
-          chmod a+w /home/runner/work/TBO_projekt/TBO_projekt/report_json.json 
-          chmod a+w /home/runner/work/TBO_projekt/TBO_projekt/report_md.md 
-          chmod a+w /home/runner/work/TBO_projekt/TBO_projekt/report_html.html
-
       - name: ZAP Full Scan
         uses: zaproxy/action-full-scan@v0.9.0
         with:
           target: 'http://127.0.0.1:5000'
-#          cmd_options: '-J /usr/bin/report_json.json -w /usr/bin/report_md.md -r /usr/bin/report_html.html'
+          cmd_options: '-J /usr/bin/report_json.json -w /usr/bin/report_md.md -r /usr/bin/report_html.html'
 
       - name: Stop Flask Application
         run: |
