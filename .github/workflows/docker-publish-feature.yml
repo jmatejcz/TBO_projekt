@@ -111,3 +111,11 @@ jobs:
       - name: Stop Flask Application
         run: |
           pkill -f "python app.py"
+      
+      # Adding Snyk SCA step
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/python@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
