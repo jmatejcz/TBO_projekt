@@ -101,10 +101,26 @@ jobs:
         run: |
           nohup python app.py &
 
-      - name: ZAP Full Scan
-        uses: zaproxy/action-baseline@v0.11.0
+      - name: Set up OWASP ZAP
+        run: |
+          wget https://github.com/zaproxy/zaproxy/releases/download/v2.11.0/ZAP_2.11.0_Linux.tar.gz
+          tar -xvzf ZAP_2.11.0_Linux.tar.gz
+          export PATH=$PATH:$(pwd)/ZAP_2.11.0
+
+      - name: Run ZAP DAST Scan
+        run: |
+          zap-baseline.py -t http://127.0.0.1:5000 -r report.html
+
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v2
         with:
-          target: 'http://127.0.0.1:5000'
+          name: zap-report
+          path: report.html
+
+#      - name: ZAP Full Scan
+#        uses: zaproxy/action-baseline@v0.11.0
+#        with:
+#          target: 'http://127.0.0.1:5000'
 #          token: '${{ secrets.GITHUB_TOKEN }}'
 #          cmd_options: '-J /usr/bin/report_json.json -w /usr/bin/report_md.md -r /usr/bin/report_html.html'
 
