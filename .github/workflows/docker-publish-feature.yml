@@ -97,6 +97,7 @@ jobs:
         run: |
           pip install pytest
           pytest project/tests/
+
       # Install required python dependencies
       # before running Flask application
       - name: Install Dependencies
