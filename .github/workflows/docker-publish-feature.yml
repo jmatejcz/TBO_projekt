@@ -69,12 +69,6 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-#  build-docker-image:
-#    runs-on: ubuntu-latest
-#    needs: [setup-docker]
-#    permissions: write-all
-#
-#    steps:
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
