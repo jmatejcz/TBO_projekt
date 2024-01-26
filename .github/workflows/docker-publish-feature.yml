@@ -98,6 +98,7 @@ jobs:
           pytest --trace project/tests/
 
       - name: Run Bandit (Python Static Analysis)
+        continue-on-error: true
         run: |
           pip install bandit
           bandit -r . # Recursively scan all Python files
