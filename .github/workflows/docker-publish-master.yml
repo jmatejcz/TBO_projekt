@@ -1,4 +1,4 @@
-name: Docker-feature
+name: Docker-master
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
@@ -9,19 +9,15 @@ on:
   schedule:
     - cron: '34 1 * * *'
   push:
-    branches: [ "feature/*" ]
-    # Publish semver tags as releases.
+    branches: [ "master" ]
     tags: [ 'v*.*.*' ]
 
 env:
-  # Use docker.io for Docker Hub if empty
   REGISTRY: docker.io
   IMAGE_NAME: tboproject/tbo
 
-
 jobs:
-  build:
-
+  checkout:
     runs-on: ubuntu-latest
     permissions: write-all
 
@@ -29,13 +25,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Install the cosign tool except on PR
-      # https://github.com/sigstore/cosign-installer
-      - name: Install cosign
-        if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@6e04d228eb30da1757ee4e1dd75a0ec73a653e06 #v3.1.1
-        with:
-          cosign-release: 'v2.1.1'
+  build-docker-image:
+    runs-on: ubuntu-latest
+    needs: [checkout]
+    permissions: write-all
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
@@ -73,6 +70,13 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # Install cosign
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@6e04d228eb30da1757ee4e1dd75a0ec73a653e06 #v3.1.1
+        with:
+          cosign-release: 'v2.1.1'
+
       # Sign the resulting Docker image digest except on PRs.
       # This will only write to the public Rekor transparency log when the Docker
       # repository is public to avoid leaking data.  If you would like to publish
@@ -88,19 +92,61 @@ jobs:
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
-      # Install required python dependencies
-      # before running Flask application
+  unit-test:
+    runs-on: ubuntu-latest
+    needs: build-docker-image
+    permissions: write-all
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
 
+      - name: Run Pytest
+        run: |
+          pip install pytest
+          pytest --trace project/tests/
+
+  bandit-scan:
+    runs-on: ubuntu-latest
+    needs: build-docker-image
+    permissions: write-all
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run Bandit (Python Static Analysis)
+        run: |
+          pip install bandit
+          bandit -r . # Recursively scan all Python files
+
+  owasp-zap-scan:
+    runs-on: ubuntu-latest
+    needs: build-docker-image
+    permissions: write-all
+
+    steps:
       # Run Flask application in the background
       # for the purpose of performing dynamic application
       # security testing
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
       - name: Start Flask Application
         run: |
           nohup python app.py &
-
       # Perform OWASP ZAP full scan
       - name: ZAP Full Scan
         uses: zaproxy/action-full-scan@v0.9.0
@@ -111,3 +157,46 @@ jobs:
       - name: Stop Flask Application
         run: |
           pkill -f "python app.py"
+      
+      - name: Download Dependency-Check
+        run: |
+          wget https://github.com/jeremylong/DependencyCheck/releases/download/v6.5.3/dependency-check-6.5.3-release.zip
+          unzip dependency-check-6.5.3-release.zip
+
+      - name: Run Dependency-Check
+        run: |
+          dependency-check/bin/dependency-check.sh --project flaskapp --scan ./project --format HTML --format JSON
+
+      - name: Upload Dependency-Check Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: dependency-check-report
+          path: |
+            dependency-check-report.html
+            dependency-check-report.json
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    needs: build-docker-image
+    permissions: write-all
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Download Dependency-Check
+        run: |
+          wget https://github.com/jeremylong/DependencyCheck/releases/download/v6.5.3/dependency-check-6.5.3-release.zip
+          unzip dependency-check-6.5.3-release.zip
+
+      - name: Run Dependency-Check
+        run: |
+          dependency-check/bin/dependency-check.sh --project flaskapp --scan ./project --format HTML --format JSON
+
+      - name: Upload Dependency-Check Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: dependency-check-report
+          path: |
+            dependency-check-report.html
+            dependency-check-report.json
