@@ -5,6 +5,17 @@
 - Bartosz Cywiński
 
 ## Opis CICD
+W CICD na początku budowany jest obraz dockerowy, który następnie wypychany jest do rejestru obrazów dockerowych `docker.io`. W zależności od tego czy jest to feature branch, czy master, obraz ma inne tagi.
+
+Workflow następnie niezależnie od siebie uruchamia 3 gałęzie, które uruchamiają:
+1. Unit testy
+2. Testy SAST
+3. Testy DAST
+4. Testy SCA
+
+Workflow na feature branchu uruchamia się przy pushu.
+Testy sprawdzające podatności nie przechodzą, ze względu na podatności w kodzie aplikacji którą wykorzystaliśmy w projekcie. OWASP natomiast przechodzi, generując raport i issue na GitHubie.
+![Alt text](images/image.png)
 
 
 ## Dodane podatności
