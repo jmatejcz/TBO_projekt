@@ -1,4 +1,4 @@
-from flask import render_template, Blueprint, request, redirect, url_for, jsonify
+from flask import render_template, Blueprint, request, redirect, url_for, jsonify, send_file
 from project import db
 from project.loans.models import Loan
 from project.loans.forms import CreateLoan
@@ -9,6 +9,14 @@ from project.customers.models import Customer
 # Blueprint for loans
 loans = Blueprint('loans', __name__, template_folder='templates', url_prefix='/loans')
 
+
+@loans.route('/books/get_file', methods=['GET'])
+def get_file():
+    filename = request.args.get('filename')
+    try:
+        return send_file(filename, as_attachment=True)
+    except Exception as e:
+        return str(e)
 
 # Route to provide book and customer data in JSON format
 @loans.route('/books/json', methods=['GET'])
@@ -49,7 +57,7 @@ def create_loan():
     form = CreateLoan()
 
     if request.method == 'POST':
-        
+
         # Process form submission
         customer_name = form.customer_name.data
         book_name = form.book_name.data
@@ -145,7 +153,7 @@ def delete_loan(loan_id):
             author=loan.original_author,
             year_published=loan.original_year_published,
             book_type=loan.original_book_type,
-            status='available'  
+            status='available'
         )
 
         # Add the book to the database
