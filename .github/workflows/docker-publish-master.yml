@@ -93,7 +93,7 @@ jobs:
       - name: Run Pytest
         run: |
           pip install pytest
-          pytest project/tests/
+          pytest --trace project/tests/
 
       - name: Run Bandit (Python Static Analysis)
         run: |
