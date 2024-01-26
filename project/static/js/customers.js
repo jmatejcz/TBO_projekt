@@ -1,3 +1,32 @@
+// Function to get customer data
+const getCustomer = customerId => {
+    // Send an AJAX request to fetch customer data
+    $.ajax({
+        url: `/customers/${customerId}/get-data`,
+        method: 'GET',
+        success: response => {
+            console.log('Success:', response);
+
+            if (response.success) {
+                const customerData = response.customer;
+
+                // Display the customer JSON
+                console.log('Customer Data:', customerData);
+
+
+            } else {
+                console.log('Error:', response.error);
+                alert('Error fetching customer data: ' + response.error);
+            }
+        },
+        error: (xhr, textStatus, errorThrown) => {
+            console.log('Error:', errorThrown);
+            alert('Error fetching customer data: ' + errorThrown);
+        }
+    });
+};
+
+
 // Function to handle search
 const searchCustomers = () => {
     let input, filter, table, tr, td, i, txtValue;
@@ -25,8 +54,8 @@ $(document).ready(() => {
 
         // Get form data
         const name = $('#name').val();
-        const city = $('#city').val(); 
-        const age = $('#age').val(); 
+        const city = $('#city').val();
+        const age = $('#age').val();
         const street = $('#street').val();
         const pesel = $('#pesel').val();
         const appNo = $('#appNo').val();
@@ -37,7 +66,7 @@ $(document).ready(() => {
             method: 'POST',
             data: {
                 name: name,
-                city: city, 
+                city: city,
                 age: age,
                 street: street,
                 pesel: pesel,
@@ -150,4 +179,3 @@ $(document).ready(() => {
         });
     });
 });
-
