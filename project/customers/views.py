@@ -6,6 +6,30 @@ from project.customers.models import Customer
 # Blueprint for customers
 customers = Blueprint('customers', __name__, template_folder='templates', url_prefix='/customers')
 
+# Route to fetch customer data by ID (VULNERABLE TO SQL INJECTION)
+@customers.route('/<int:customer_id>/get-data', methods=['GET'])
+def get_customer_data(customer_id):
+    # Construct the SQL query using string concatenation
+    query = "SELECT * FROM customers WHERE id = " + str(customer_id)
+
+    # Execute the query
+    result = db.session.execute(query)
+
+    # Fetch the customer data
+    customer_data = result.fetchone()
+
+    if customer_data:
+        # Convert customer data to a dictionary
+        customer = {
+            'name': customer_data.name,
+            'city': customer_data.city,
+            'age': customer_data.age
+        }
+        return jsonify({'success': True, 'customer': customer}), 200
+    else:
+        print('Customer not found')
+        return jsonify({'error': 'Customer not found'}), 404
+
 
 # Route to display customers in HTML
 @customers.route('/', methods=['GET'])
