@@ -28,21 +28,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-  install-cosign:
-    runs-on: ubuntu-latest
-    needs: [checkout]
-    permissions: write-all
-
-    steps:
-      - name: Install cosign
-        if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@6e04d228eb30da1757ee4e1dd75a0ec73a653e06 #v3.1.1
-        with:
-          cosign-release: 'v2.1.1'
+#  install-cosign:
+#    runs-on: ubuntu-latest
+#    needs: [checkout]
+#    permissions: write-all
+#
+#    steps:
+#      - name: Install cosign
+#        if: github.event_name != 'pull_request'
+#        uses: sigstore/cosign-installer@6e04d228eb30da1757ee4e1dd75a0ec73a653e06 #v3.1.1
+#        with:
+#          cosign-release: 'v2.1.1'
 
   build-docker-image:
     runs-on: ubuntu-latest
-    needs: [install-cosign]
+    needs: [checkout]
     permissions: write-all
 
     steps:
@@ -85,6 +85,13 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # Install cosign
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@6e04d228eb30da1757ee4e1dd75a0ec73a653e06 #v3.1.1
+        with:
+          cosign-release: 'v2.1.1'
+
       # Sign the resulting Docker image digest except on PRs.
       # This will only write to the public Rekor transparency log when the Docker
       # repository is public to avoid leaking data.  If you would like to publish
@@ -98,13 +105,13 @@ jobs:
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
-        run: |
-          # Install cosign
-          curl -sL https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 --output cosign
-          chmod +x cosign
-          sudo mv cosign /usr/local/bin/cosign
-          echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
-#        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+#        run: |
+#          # Install cosign
+#          curl -sL https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 --output cosign
+#          chmod +x cosign
+#          sudo mv cosign /usr/local/bin/cosign
+#          echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
   setup-python-env:
     runs-on: ubuntu-latest
@@ -119,25 +126,47 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
-  unit-tests:
+
+  unit-test:
     runs-on: ubuntu-latest
-    needs: [setup-python-env]
+    needs: setup-python-env
     permissions: write-all
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Run Pytest
+        run: |
+          pip install pytest
+          pytest --trace project/tests/
+
+  bandit-scan:
+    runs-on: ubuntu-latest
+    needs: setup-python-env
+    permissions: write-all
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Run Bandit (Python Static Analysis)
         run: |
           pip install bandit
           bandit -r . # Recursively scan all Python files
+
   owasp-zap-scan:
     runs-on: ubuntu-latest
-    needs: [setup-python-env]
+    needs: setup-python-env
     permissions: write-all
 
     steps:
       # Run Flask application in the background
       # for the purpose of performing dynamic application
       # security testing
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Start Flask Application
         run: |
           nohup python app.py &
