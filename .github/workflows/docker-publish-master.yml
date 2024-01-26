@@ -157,3 +157,20 @@ jobs:
       - name: Stop Flask Application
         run: |
           pkill -f "python app.py"
+      
+      - name: Download Dependency-Check
+        run: |
+          wget https://github.com/jeremylong/DependencyCheck/releases/download/v6.5.3/dependency-check-6.5.3-release.zip
+          unzip dependency-check-6.5.3-release.zip
+
+      - name: Run Dependency-Check
+        run: |
+          dependency-check/bin/dependency-check.sh --project flaskapp --scan ./project --format HTML --format JSON
+
+      - name: Upload Dependency-Check Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: dependency-check-report
+          path: |
+            dependency-check-report.html
+            dependency-check-report.json
