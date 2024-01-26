@@ -1,4 +1,4 @@
-name: Docker-master
+name: Docker-feature
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
@@ -9,7 +9,7 @@ on:
   schedule:
     - cron: '34 1 * * *'
   push:
-    branches: [ "master" ]
+    branches: [ "feature/*" ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
 
@@ -23,12 +23,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      # This is used to complete the identity challenge
-      # with sigstore/fulcio when running outside of PRs.
-      id-token: write
+    permissions: write-all
 
     steps:
       - name: Checkout repository
@@ -92,3 +87,27 @@ jobs:
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+      # Install required python dependencies
+      # before running Flask application
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      # Run Flask application in the background
+      # for the purpose of performing dynamic application
+      # security testing
+      - name: Start Flask Application
+        run: |
+          nohup python app.py &
+
+      # Perform OWASP ZAP full scan
+      - name: ZAP Full Scan
+        uses: zaproxy/action-full-scan@v0.9.0
+        with:
+          target: 'http://127.0.0.1:5000'
+
+      # Kill Flask application after DAST tests completed
+      - name: Stop Flask Application
+        run: |
+          pkill -f "python app.py"
