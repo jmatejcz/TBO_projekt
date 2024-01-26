@@ -24,12 +24,6 @@ jobs:
 
     runs-on: ubuntu-latest
     permissions: write-all
-#    permissions:
-#      contents: read
-#      packages: write
-#      # This is used to complete the identity challenge
-#      # with sigstore/fulcio when running outside of PRs.
-#      id-token: write
 
     steps:
       - name: Checkout repository
@@ -94,21 +88,26 @@ jobs:
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
+      # Install required python dependencies
+      # before running Flask application
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
 
+      # Run Flask application in the background
+      # for the purpose of performing dynamic application
+      # security testing
       - name: Start Flask Application
         run: |
           nohup python app.py &
 
+      # Perform OWASP ZAP full scan
       - name: ZAP Full Scan
         uses: zaproxy/action-full-scan@v0.9.0
         with:
           target: 'http://127.0.0.1:5000'
-#          token: '${{ secrets.GITHUB_TOKEN }}'
-#          cmd_options: '-J /usr/bin/report_json.json -w /usr/bin/report_md.md -r /usr/bin/report_html.html'
 
+      # Kill Flask application after DAST tests completed
       - name: Stop Flask Application
         run: |
           pkill -f "python app.py"
