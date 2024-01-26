@@ -119,7 +119,7 @@ jobs:
 
       - name: Run Dependency-Check
         run: |
-          dependency-check/bin/dependency-check.sh --project "YourProjectName" --scan ./path/to/scan --format HTML --format JSON
+          dependency-check/bin/dependency-check.sh --project flaskapp --scan ./project --format HTML --format JSON
 
       - name: Upload Dependency-Check Report
         uses: actions/upload-artifact@v2
