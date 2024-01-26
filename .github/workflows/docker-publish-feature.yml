@@ -88,6 +88,11 @@ jobs:
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
+      # Install required python dependencies
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
       - name: Run Pytest
         run: |
           pip install pytest
@@ -97,12 +102,6 @@ jobs:
         run: |
           pip install bandit
           bandit -r . # Recursively scan all Python files
-
-      # Install required python dependencies
-      # before running Flask application
-      - name: Install Dependencies
-        run: |
-          pip install -r requirements.txt
 
       # Run Flask application in the background
       # for the purpose of performing dynamic application
