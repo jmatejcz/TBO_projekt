@@ -112,10 +112,19 @@ jobs:
         run: |
           pkill -f "python app.py"
       
-      # Adding Snyk SCA step
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/python@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Download Dependency-Check
+        run: |
+          wget https://github.com/jeremylong/DependencyCheck/releases/download/v6.5.3/dependency-check-6.5.3-release.zip
+          unzip dependency-check-6.5.3-release.zip
+
+      - name: Run Dependency-Check
+        run: |
+          dependency-check/bin/dependency-check.sh --project "YourProjectName" --scan ./path/to/scan --format HTML --format JSON
+
+      - name: Upload Dependency-Check Report
+        uses: actions/upload-artifact@v2
         with:
-          args: --severity-threshold=high
+          name: dependency-check-report
+          path: |
+            dependency-check-report.html
+            dependency-check-report.json
